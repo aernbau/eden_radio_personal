@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">eden</string>
+
+    <string name="title_string">eden</string>
+    <string name="listeners_text">listeners</string>
+    <string name="current_text">currently playing</string>
+    <string name="background_descr">It\'s a background.</string>
+    <string name="play_img_descr">It\'s the play button.</string>
+    <string name="stop_img_descr">It\'s the stop button.</string>
+    <string name="yet_to_turn">You\'re offline</string>
+    <string name="dj_text">current DJ</string>
+</resources>
