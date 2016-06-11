@@ -6,3 +6,4 @@ Minimal functionality:
 ・current listeners, song and DJ  
   
 Run this project in Android studio and build it for yourself.
+Required: droidQuery (should be imported)
