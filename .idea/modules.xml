@@ -3,8 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/eden.iml" filepath="$PROJECT_DIR$/eden.iml" />
+      <module fileurl="file://$PROJECT_DIR$/eden_radio_personal.iml" filepath="$PROJECT_DIR$/eden_radio_personal.iml" />
     </modules>
   </component>
 </project>
-

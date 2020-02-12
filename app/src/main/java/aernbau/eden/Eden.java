@@ -2,25 +2,26 @@ package aernbau.eden;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import self.philbrown.droidQuery.$;
-import self.philbrown.droidQuery.AjaxOptions;
-import self.philbrown.droidQuery.Function;
 
 public class Eden extends Activity {
 
@@ -46,12 +47,12 @@ public class Eden extends Activity {
         serviceIntent = new Intent(this, ContinueService.class);
 
         //Text fields
-        title = (TextView)findViewById(R.id.title_textview);
-        listeners = (TextView)findViewById(R.id.listeners_json_textview);
-        current = (TextView)findViewById(R.id.current_json_textview);
-        previous = (TextView)findViewById(R.id.previous_played_json_textview);
-        listn = (TextView)findViewById(R.id.listeners_textview);
-        discjockey = (TextView)findViewById(R.id.dj_json_textview);
+        title = findViewById(R.id.title_textview);
+        listeners = findViewById(R.id.listeners_json_textview);
+        current = findViewById(R.id.current_json_textview);
+        previous = findViewById(R.id.previous_played_json_textview);
+        listn = findViewById(R.id.listeners_textview);
+        discjockey = findViewById(R.id.dj_json_textview);
 
         // Custom font and setting it
         font = Typeface.createFromAsset(getAssets(), "Lato-Regular.ttf");
@@ -60,7 +61,7 @@ public class Eden extends Activity {
         listn.setTypeface(font); discjockey.setTypeface(font);
 
         // Setting up the image to be a button
-        play = (ImageView)findViewById(R.id.toggle_player);
+        play = findViewById(R.id.toggle_player);
         stop_it = isMyServiceRunning(ContinueService.class);
         if(stop_it) play.setImageResource(R.drawable.stop);
 
@@ -119,58 +120,57 @@ public class Eden extends Activity {
         super.onDestroy();
     }
 
-    // Runnable object that checks JSON every 8 seconds
-    Runnable mStatusChecker = new Runnable() {
-        @Override
-        public void run() {
+    private class StatusChecker extends AsyncTask<String, Void, Void> {
+        private JSONObject json;
+
+        protected Void doInBackground(String ...url) {
             if (activeNetwork != null && activeNetwork.isConnected()) {
                 allow_playing = true;
                 // ajax function for the actual retrieval
                 // and UI modifications
-                $.ajax(new AjaxOptions().url("http://www.edenofthewest.com/ajax/status.php")
-                    .type("GET")
-                    .dataType("JSON")
-                    .context(Eden.this)
-                    .success(new Function() {
-                        @Override
-                        public void invoke($ droid, Object... args) {
-                            JSONObject json = (JSONObject) args[0];
-                            try {
-                                latest_json = json.toString();
-                                if (!latest_json.equals(previous_json)) {
-                                    listeners.setText(json.getString("listeners"));
-                                    if (!current.getText().equals(json.getString("current"))) {
-                                        editor = shared_prefs.edit();
-                                        editor.putString("current_json", json.getString("current"));
-                                        editor.commit();
-                                    }
-                                    current.setText(json.getString("current"));
-                                    //If current song unequal to json current song, that's a new song
-
-                                    discjockey.setText(json.getString("dj"));
-                                    String prev = "Previously played:\n";
-                                    JSONArray jsonArray = json.getJSONArray("lastplayed");
-                                    for (int i = 0; i < jsonArray.length(); i++) {
-                                        prev += jsonArray.getString(i) + "\n";
-                                    }
-                                    previous.setText(prev);
-                                }
-                                previous_json = json.toString();
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    })
-                    .error(new Function() { //This was only used for testing.
-                        @Override
-                        public void invoke($ droid, Object... args) {
-                            String reason = (String) args[2];
-                            //droid.toast("Error - " + reason, Toast.LENGTH_LONG);
-                        }
-                    }));
+                this.json = JSONParser.getJSONFromUrl(url[0]);
             } else {
                 allow_playing = false;
             }
+            return null;
+        }
+
+        protected void onPostExecute(Void none) {
+            if (this.json != null) {
+                try {
+                    latest_json = this.json.toString();
+                    if (!latest_json.equals(previous_json)) {
+                        listeners.setText(this.json.getString("listeners"));
+                        if (!current.getText().equals(this.json.getString("current"))) {
+                            editor = shared_prefs.edit();
+                            editor.putString("current_json", this.json.getString("current"));
+                            editor.apply();
+                        }
+                        current.setText(this.json.getString("current"));
+                        //If current song unequal to json current song, that's a new song
+
+                        discjockey.setText(this.json.getString("dj"));
+                        StringBuilder prev = new StringBuilder();
+                        prev.append("Previously played:\n");
+                        JSONArray jsonArray = this.json.getJSONArray("lastplayed");
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            prev.append(jsonArray.getString(i) + "\n");
+                        }
+                        previous.setText(prev);
+                    }
+                    previous_json = this.json.toString();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(), "Network error", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+    // Runnable object that checks JSON every 8 seconds
+    Runnable mStatusChecker = new Runnable() {
+        @Override
+        public void run() {
+            new StatusChecker().execute("https://www.edenofthewest.com/ajax/status.php");
             mHandler.postDelayed(mStatusChecker, 8000);
         }
     };
