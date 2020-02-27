@@ -43,9 +43,8 @@ public class ContinueService extends Service {
     public void onCreate() {
     }
 
-    @Override
-    public void onStart(Intent intent, int startId) {
-        super.onStart(intent, startId);
+    public int onStartCommand(Intent intent, int flag, int startId) {
+        super.onStartCommand(intent, flag, startId);
 
         notif_handler = new Handler();
 
@@ -60,7 +59,6 @@ public class ContinueService extends Service {
         audio_stream.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mediaPlayer) {
-                Log.d(TAG, "onPrepared: doesn't prepare?");
                 audio_stream.start();
             }
         });
@@ -103,6 +101,8 @@ public class ContinueService extends Service {
             wLock.release();
             stopForeground(true);
         }
+
+        return START_STICKY;
     }
 
     @Override
