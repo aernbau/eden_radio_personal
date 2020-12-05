@@ -71,7 +71,8 @@ public class ContinueService extends Service {
 
         audio_stream.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
 
-        final String eden_url = "http://edenofthewest.com:8080/eden.mp3"; // EDEN stream
+        long currentTimeSec = System.currentTimeMillis() / 1000;
+        final String eden_url = "https://www.edenofthewest.com/radio/8000/radio.mp3?"+currentTimeSec; // EDEN stream
 
         pi = PendingIntent.getActivity(
                 getApplicationContext(), 0,
